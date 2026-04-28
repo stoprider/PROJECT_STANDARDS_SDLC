@@ -56,6 +56,25 @@
         .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.75rem; text-align: left; }
         .markdown-body th { background: rgba(56, 189, 248, 0.05); color: var(--accent); }
 
+        /* Copy Button */
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .copy-btn:hover { background: var(--accent); color: white; }
+        .markdown-body pre, .markdown-body blockquote { position: relative; }
+        .markdown-body pre:hover .copy-btn, .markdown-body blockquote:hover .copy-btn { opacity: 1; }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-main); }
@@ -93,14 +112,34 @@
                 <button onclick="loadFile('SDLC_MAP_V1.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
                     <span class="w-5 text-slate-500">02</span> SDLC Roadmap Map
                 </button>
+                <button onclick="loadFile('SDLC_PHASES_STEP_BY_STEP.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">03</span> Step-by-Step Guide
+                </button>
                 <button onclick="loadFile('STANDARD_DEVELOPMENT_GUIDE_V1.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
-                    <span class="w-5 text-slate-500">03</span> Development Guide
+                    <span class="w-5 text-slate-500">04</span> Development Guide
                 </button>
                 <button onclick="loadFile('DIRECTOR_GOVERNANCE_RULES.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
-                    <span class="w-5 text-slate-500">04</span> Governance Rules
+                    <span class="w-5 text-slate-500">05</span> Governance Rules
+                </button>
+                <button onclick="loadFile('07_QUALITY_GATES_DOD.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">06</span> Quality Gates (DoD)
+                </button>
+                <button onclick="loadFile('08_PORT_REGISTRY.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">07</span> Port Registry
+                </button>
+                <button onclick="loadFile('09_AI_TROUBLESHOOTING_GUIDE.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">08</span> AI Troubleshooting
                 </button>
                 <button onclick="loadFile('PROJECT_INITIALIZATION_PROMPT.md', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
-                    <span class="w-5 text-slate-500">05</span> Init Prompt (Copy)
+                    <span class="w-5 text-slate-500">09</span> Init Prompt (Copy)
+                </button>
+
+                <div class="p-6 pb-2 mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tools</div>
+                <button onclick="showBriefForm()" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">B1</span> Project Brief Form
+                </button>
+                <button onclick="loadFile('bootstrap_project.sh', this)" class="sidebar-item w-full text-left px-8 py-3 flex items-center gap-3 text-sm font-medium">
+                    <span class="w-5 text-slate-500">B2</span> Bootstrap Script (Code)
                 </button>
 
                 <div class="p-6 pb-2 mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Templates</div>
@@ -120,7 +159,7 @@
             <div class="p-6 glass mt-auto border-t border-white/5">
                 <div class="flex items-center gap-3 text-xs text-slate-400">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    Ready for Next Project
+                    Standard SDLC v1.0 Ready
                 </div>
             </div>
         </aside>
@@ -128,16 +167,13 @@
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto p-12 bg-slate-900/50">
             <div id="content-area" class="max-w-4xl mx-auto markdown-body animate-fade">
-                <div class="flex flex-col items-center justify-center h-96 text-slate-500">
-                    <div class="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin mb-4"></div>
-                    <p>กำลังเตรียมข้อมูลสำหรับ Project Director...</p>
-                </div>
+                <!-- Initial content will be loaded here -->
             </div>
         </main>
     </div>
 
     <script>
-        // Setup marked options for a better look
+        // Setup marked options
         marked.setOptions({
             gfm: true,
             breaks: true,
@@ -146,7 +182,6 @@
         });
 
         async function loadFile(fileName, element) {
-            // Update UI
             if (element) {
                 document.querySelectorAll('.sidebar-item').forEach(btn => btn.classList.remove('active'));
                 element.classList.add('active');
@@ -156,43 +191,96 @@
             contentArea.style.opacity = '0';
             
             try {
-                // Fetch the markdown file
                 const response = await fetch(fileName);
                 if (!response.ok) throw new Error('File not found');
                 const markdown = await response.text();
                 
-                // Render and Purify
                 const html = marked.parse(markdown);
                 const cleanHTML = DOMPurify.sanitize(html);
-                
                 contentArea.innerHTML = cleanHTML;
 
-                // POST-PROCESS: Make all links inside markdown open in new tab
-                const links = contentArea.querySelectorAll('a');
-                links.forEach(link => {
+                // Post-process links
+                contentArea.querySelectorAll('a').forEach(link => {
                     link.setAttribute('target', '_blank');
                     link.setAttribute('rel', 'noopener noreferrer');
                     link.classList.add('text-sky-400', 'hover:underline');
                 });
+
+                // Post-process copy buttons
+                contentArea.querySelectorAll('blockquote, pre').forEach(block => {
+                    const btn = document.createElement('button');
+                    btn.className = 'copy-btn';
+                    btn.innerText = 'Copy';
+                    btn.onclick = () => {
+                        const text = block.innerText.replace('Copy', '').trim();
+                        navigator.clipboard.writeText(text);
+                        btn.innerText = 'Copied!';
+                        setTimeout(() => btn.innerText = 'Copy', 2000);
+                    };
+                    block.appendChild(btn);
+                });
             } catch (error) {
                 contentArea.innerHTML = `
-                    <div class="bg-red-500/10 border border-red-500/50 p-8 rounded-xl text-center">
-                        <h2 class="text-red-400 font-bold text-xl mb-2">เกิดข้อผิดพลาดในการโหลดไฟล์</h2>
-                        <p class="text-slate-400">ไม่พบไฟล์ ${fileName} หรืออาจติดข้อจำกัดด้านความปลอดภัยของเบราว์เซอร์</p>
-                        <p class="mt-4 text-sm text-slate-500 italic">คำแนะนำ: โปรดเปิดผ่าน Web Server หรือ Local Server ของระบบ IDE</p>
-                    </div>
-                `;
+                    <div class="bg-red-500/10 border border-red-500/50 p-8 rounded-xl text-center text-red-400">
+                        เกิดข้อผิดพลาดในการโหลดไฟล์: ${fileName}
+                    </div>`;
             } finally {
-                setTimeout(() => {
-                    contentArea.style.opacity = '1';
-                }, 50);
+                setTimeout(() => contentArea.style.opacity = '1', 50);
             }
         }
 
-        // Initial Load
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFile('README.md');
-        });
+        function showBriefForm() {
+            document.querySelectorAll('.sidebar-item').forEach(btn => btn.classList.remove('active'));
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div class="animate-fade">
+                    <h1 class="text-3xl font-bold mb-6 text-sky-400">Project Brief Generator</h1>
+                    <div class="space-y-6 bg-slate-800/50 p-8 rounded-2xl border border-white/5">
+                        <div>
+                            <label class="block text-sm font-bold text-sky-300 mb-2">ชื่อโครงการ</label>
+                            <input type="text" id="p-name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-sky-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-sky-300 mb-2">เป้าหมายหลัก</label>
+                            <textarea id="p-obj" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-sky-500 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-sky-300 mb-2">ฟีเจอร์ที่ต้องการ</label>
+                            <textarea id="p-feat" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-sky-500 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-sky-300 mb-2">กฎเหล็ก/ข้อจำกัด</label>
+                            <textarea id="p-rules" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-sky-500 outline-none"></textarea>
+                        </div>
+                        <button onclick="generateIntent()" class="w-full bg-sky-500 hover:bg-sky-400 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
+                            Generate Owner Intent & Prompt
+                        </button>
+                    </div>
+                    <div id="result-area" class="mt-12 hidden">
+                        <div class="relative group">
+                            <pre id="intent-code" class="bg-black p-6 rounded-xl border border-sky-500/30 overflow-x-auto text-sm text-slate-300"></pre>
+                            <button onclick="copyGenerated()" class="absolute top-4 right-4 bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Copy to Clipboard</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function generateIntent() {
+            const name = document.getElementById('p-name').value || '[ชื่อโครงการ]';
+            const obj = document.getElementById('p-obj').value || '[เป้าหมาย]';
+            const feat = document.getElementById('p-feat').value || '[ฟีเจอร์]';
+            const rules = document.getElementById('p-rules').value || '[กฎเหล็ก]';
+            const output = `# **Owner Intent: ${name}**\n\n## **1. เป้าหมาย**\n${obj}\n\n## **2. ฟีเจอร์**\n${feat.split('\n').map(f => `- ${f}`).join('\n')}\n\n## **3. กฎและข้อจำกัด**\n- ยึดตามมาตรฐาน SDLC v1.0\n${rules.split('\n').map(r => `- ${r}`).join('\n')}\n\n---\n**AI Action Prompt:**\n"ฉันได้ร่าง Owner Intent เรียบร้อยแล้ว โปรดอ่านและวิเคราะห์เพื่อวางแผน Roadmap ในเฟส Planning (Phase 1) ให้ฉันหน่อย โดยยึดหลักการทำงานแบบ SDLC v1.0"`;
+            document.getElementById('intent-code').innerText = output;
+            document.getElementById('result-area').classList.remove('hidden');
+        }
+
+        function copyGenerated() {
+            navigator.clipboard.writeText(document.getElementById('intent-code').innerText);
+            alert('คัดลอกเรียบร้อยแล้ว!');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => loadFile('README.md'));
     </script>
 </body>
 </html>
